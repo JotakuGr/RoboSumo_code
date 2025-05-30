@@ -104,7 +104,7 @@ bool inNeutralZone(int val) {
 }
 
 // if zona neutra
-bool allInNeutral() { 
+bool allInNeutral() {
   return inNeutralZone(LX) && inNeutralZone(LY) && inNeutralZone(RX_VAL) && inNeutralZone(RY);
 }
 
@@ -121,21 +121,17 @@ void loop() {
 
     //will be TRUE as long as button is pressed
     if (ps2x.Button(PSB_PAD_UP)) {
-      Serial.print("Up held this hard: ");
-      Serial.println(ps2x.Analog(PSAB_PAD_UP), DEC);
+      forward(255);
+    } else if (ps2x.Button(PSB_PAD_RIGHT)) {
+      right(255);
+    } else if (ps2x.Button(PSB_PAD_LEFT)) {
+      left(255);
+    } else if (ps2x.Button(PSB_PAD_DOWN)) {
+      rev(255);
+    } else {
+      waithere();  // Para o robô se nenhum botão direcional estiver pressionado
     }
-    if (ps2x.Button(PSB_PAD_RIGHT)) {
-      Serial.print("Right held this hard: ");
-      Serial.println(ps2x.Analog(PSAB_PAD_RIGHT), DEC);
-    }
-    if (ps2x.Button(PSB_PAD_LEFT)) {
-      Serial.print("LEFT held this hard: ");
-      Serial.println(ps2x.Analog(PSAB_PAD_LEFT), DEC);
-    }
-    if (ps2x.Button(PSB_PAD_DOWN)) {
-      Serial.print("DOWN held this hard: ");
-      Serial.println(ps2x.Analog(PSAB_PAD_DOWN), DEC);
-    }
+
 
     vibrate = ps2x.Analog(PSAB_CROSS);  //this will set the large motor vibrate speed based on how hard you press the blue (X) button
     if (ps2x.NewButtonState()) {        //will be TRUE if any button changes state (on to off, or off to on)
@@ -161,33 +157,41 @@ void loop() {
     if (ps2x.Button(PSB_L1)) {
       LY = ps2x.Analog(PSS_LY);  //receive values from p22 joystick
       LX = ps2x.Analog(PSS_LX);
-      RY = ps2x.Analog(PSS_RY);
     }
+    if (ps2x.Button(PSB_R1)) {
+      RY = ps2x.Analog(PSS_RY);
+      RX_VAL = ps2x.Analog(PSS_RX);
+    }
+
     //if ternario
-  /*(allInNeutral()) ? waithere():
+    /*(allInNeutral()) ? waithere():
       (LY < 100 && RY > 200) ? right(255) :
         (LY < 100 && RY < 100) ? left(255) :
-          (LY > 200) ? REV(255) :
+          (LY > 200) ? rev(255) :
             (LY < 100) ? forward(255) :
               waithere();*/
+
+    if (LY > 200 || RY > 200)  //check if the joystick pushed up side
+    {
+      rev(255);
+    }
+    if (LY < 100 || RY < 100) {
+      forward(255);
+    }
+    if (LX < 100 || RX_VAL < 100) {
+      left(255);
+    }
+    if (LX > 200 || RX_VAL > 200) {
+      right(255);
+    }
     if (allInNeutral()) {
       waithere();
     }
-    if (LY < 100 && RY > 200) {
-      right(255);
-    } else if (LY < 100 && RY < 100) {
-      left(255);
-    } else if (LY > 200)  //check if the joystick pushed up side
-    {
-      REV(255);
-    } else if (LY < 100) {
-      forward(255);
-    }
 
-    LY = LX = RX_VAL = RY = 128;  //return to default values
+    LY = LX = RY = RX_VAL = 128;  //return to default values
   }
-  delay(50);
 }
+
 
 void setMotorDirection(bool l1, bool l2, bool r1, bool r2) {  //Metodo da direção dos motores(Pino, HIGH/LOW)
   digitalWrite(leftm1, l1);
@@ -204,7 +208,7 @@ void forward(int vel) {
   ledcWrite(left_EN, vel);
   ledcWrite(right_EN, vel);
 }
-void REV(int vel) {
+void rev(int vel) {
   Serial.println("rev");
   setMotorDirection(LOW, HIGH, LOW, HIGH);
 
